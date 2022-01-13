@@ -1,7 +1,6 @@
 import cv2 as cv
 import numpy as np
 import os
-import numpy as np
 import sys
 import win32gui, win32ui, win32con
 
@@ -35,11 +34,11 @@ def callback(hwnd, strings):
 def main():
     win_list = []  # list of strings containing win handles and window titles
     win32gui.EnumWindows(callback, win_list)  # populate list
-    getWindowsCapture('Administrator: Command Prompt')
 
     for window in win_list:  # print results
         print(window)
 
+    getWindowsCapture('Administrator: Command Prompt')
     sys.exit(0)
 
 
