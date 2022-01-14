@@ -4,6 +4,9 @@ Source code for the OpenCV Object Detection in Games series on the **Learn Code 
 
 Watch the tutorials here: https://www.youtube.com/playlist?list=PL1m2M8LQlzfKtkKq2lK5xko4X-8EZzFPI
 
+## Don't forgot config python run on env
+
+
 Install pip
 `curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py`
 
