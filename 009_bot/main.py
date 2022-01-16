@@ -16,7 +16,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 DEBUG = True
 
 # initialize the WindowCapture class
-wincap = WindowCapture('Albion Online Client')
+wincap = WindowCapture('Bombcrypto - Brave')
 # load the detector
 detector = Detection('limestone_model_final.xml')
 # load an empty Vision class

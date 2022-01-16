@@ -1,97 +1,116 @@
-import cv2 as cv
 import numpy as np
 import os
 import sys
 import pyautogui
-from pywinauto.application import Application
+import pywinauto
+import ctypes
+import win32gui
+from PIL import ImageGrab
+import cv2
+import matplotlib
 
-# def winEnumHandler(hwnd, ctx):
-#     if win32gui.IsWindowVisible(hwnd):
-#         print(hex(hwnd), win32gui.GetWindowText(hwnd))
-#
-#
-# win32gui.EnumWindows(winEnumHandler, None)
-
-
-def getWindowsCapture(window_name, windows_name=None):
-    # properties
-    w = 0
-    h = 0
-    hwnd = None
-    cropped_x = 0
-    cropped_y = 0
-    offset_x = 0
-    offset_y = 0
-    # windows_name = win32gui.FindWindow(None, window_name)
-    if not windows_name:
-        raise Exception('Window not found: {}'.format(window_name))
-    # get the window size
-    # window_rect = win32gui.GetWindowRect(windows_name)
-    # w = window_rect[2] - window_rect[0]
-    # h = window_rect[3] - window_rect[1]
-
-    # wDC = win32gui.GetWindowDC(windows_name)
-    # dcObj = win32ui.CreateDCFromHandle(wDC)
-    # cDC = dcObj.CreateCompatibleDC()
-    # dataBitMap = win32ui.CreateBitmap()
-    # dataBitMap.CreateCompatibleBitmap(dcObj, w, h)
-    # cDC.SelectObject(dataBitMap)
-    # cDC.BitBlt((0, 0), (w, h), dcObj, (0, 0), win32con.SRCCOPY)
-
-    # convert the raw data into a format opencv can read
-    # dataBitMap.SaveBitmapFile(cDC, 'debug.bmp')
-    # signedIntsArray = dataBitMap.GetBitmapBits(True)
-    # img = np.fromstring(signedIntsArray, dtype='uint8')
-    # img.shape = (h, w, 4)
-    # myScreenshot = pyautogui.screenshot()
-    # myScreenshot = np.array(img)
-    # print(myScreenshot)
-    # free resources
-    # dcObj.DeleteDC()
-    # cDC.DeleteDC()
-    # win32gui.ReleaseDC(window_name, wDC)
-    # win32gui.DeleteObject(dataBitMap.GetHandle())
-    # cv.imshow('Computer Vision', myScreenshot)
-
-    # drop the alpha channel, or cv.matchTemplate() will throw an error like:
-    #   error: (-215:Assertion failed) (depth == CV_8U || depth == CV_32F) && type == _templ.type()
-    #   && _img.dims() <= 2 in function 'cv::matchTemplate'
-    # img = img[..., :3]
-
-    # make image C_CONTIGUOUS to avoid errors that look like:
-    #   File ... in draw_rectangles
-    #   TypeError: an integer is required (got type tuple)
-    # see the discussion here:
-    # https://github.com/opencv/opencv/issues/14866#issuecomment-580207109
-    # img = np.ascontiguousarray(img)
-
-    print('done')
-
-
-# def callback(hwnd, strings):
-#     if win32gui.IsWindowVisible(hwnd):
-#         window_title = win32gui.GetWindowText(hwnd)
-#         left, top, right, bottom = win32gui.GetWindowRect(hwnd)
-#         if window_title and right - left and bottom - top:
-#             strings.append('0x{:08x}: "{}"'.format(hwnd, window_title))
-#     return True
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+from skimage import color, data
 
 
 def main():
+    print('main')
     win_list = []  # list of strings containing win handles and window titles
     # win32gui.EnumWindows(callback, win_list)  # populate list
-    # app = Application().start("notepad.exe")
-    #
-    # app.UntitledNotepad.menu_select("Help->About Notepad")
-    # app.AboutNotepad.OK.click()
-    # app.UntitledNotepad.Edit.type_keys("pywinauto Works!", with_spaces=True)
+    # win_list = pywinauto.findwindows.enum_windows()
+    # win_list = pywinauto.findwindows.find_windows(best_match='Bombcrypto - Google Chrome')
+    app = pywinauto.Application().connect(title_re=".*Bombcrypto")
+    hwin = app.top_window()
+    hwin.set_focus()
 
-    for window in win_list:  # print results
-        print(window)
+    window_title = hwin.window_text()
+    print(window_title)
+    hwnd = win32gui.FindWindow(None, window_title)
+    dimensions = win32gui.GetWindowRect(hwnd)
+    print(dimensions)
+    windows = pywinauto.Desktop(backend="uia").windows()
+    print([w.window_text() for w in windows])
+    # rect = ctypes.wintypes.RECT()
+    # DWMWA_EXTENDED_FRAME_BOUNDS = 9
+    # ctypes.windll.dwmapi.DwmGetWindowAttribute(
+    #     ctypes.wintypes.HWND(win32gui.FindWindow(None, window_title)),
+    #     ctypes.wintypes.DWORD(DWMWA_EXTENDED_FRAME_BOUNDS),
+    #     ctypes.byref(rect),
+    #     ctypes.sizeof(rect)
+    # )
+    # print(rect)
+    image = ImageGrab.grab(bbox=(10, 10, 1060, 728))
+    image.show()
+    # print([w.window_text() for w in win_list])
 
-    getWindowsCapture('opencv_tutorials – bot.py')
-    sys.exit(0)
+    # for window in win_list:  # print results
+    #     print(window)
+    # os.system("pause")
+
+    # getWindowsCapture('opencv_tutorials – bot.py')
+    # sys.exit(0)
+
+
+MIN_MATCH_COUNT = 10
 
 
 if __name__ == '__main__':
-    main()
+    image_path = sys.path[0] + '/img/board_game.png'
+    app = pywinauto.Application().connect(title_re=".*Bombcrypto")
+    hwin = app.top_window()
+    hwin.set_focus()
+
+    window_title = hwin.window_text()
+    hwnd = win32gui.FindWindow(None, window_title)
+    dimensions = win32gui.GetWindowRect(hwnd)
+    print(dimensions)
+    image = ImageGrab.grab(bbox=dimensions)
+
+    img1 = cv2.imread(sys.path[0] + '/img/treasure_hunt.png', 0)
+    img2 = np.array(image)
+
+    # Initiate SIFT detector
+    sift = cv2.SIFT_create()
+    # find the keypoints and descriptors with SIFT
+    kp1, des1 = sift.detectAndCompute(img1, None)
+    kp2, des2 = sift.detectAndCompute(img2, None)
+    FLANN_INDEX_KDTREE = 0
+    index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
+    search_params = dict(checks=50)
+    flann = cv2.FlannBasedMatcher(index_params, search_params)
+    matches = flann.knnMatch(des1, des2, k=2)
+    # store all the good matches as per Lowe's ratio test.
+    good = []
+    for m, n in matches:
+        if m.distance < 0.7 * n.distance:
+            good.append(m)
+    if len(good) > MIN_MATCH_COUNT:
+        src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
+        dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
+        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+        matchesMask = mask.ravel().tolist()
+        h, w = img1.shape
+        pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]
+                         ).reshape(-1, 1, 2)
+        dst = cv2.perspectiveTransform(pts, M)
+        print(dst[0])
+
+        img2 = cv2.polylines(img2, [np.int32(dst)], True, 255, 3, cv2.IMREAD_COLOR)
+        cv2.imshow('image', img2)
+
+    else:
+        print("Not enough matches are found - %d/%d" %
+              (len(good), MIN_MATCH_COUNT))
+        matchesMask = None
+    draw_params = dict(matchColor=(0, 255, 0),  # draw matches in green color
+                       singlePointColor=None,
+                       matchesMask=matchesMask,  # draw only inliers
+                       flags=2)
+    img3 = cv2.drawMatches(img1, kp1, img2, kp2, good, None, **draw_params)
+
+    # hunt = cv2.imread(image_path, cv2.IMREAD_COLOR)
+    cv2.imshow('result', img3)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    # main()
