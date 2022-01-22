@@ -1,5 +1,7 @@
+import time
+
 import pywinauto
-import win32gui
+import win32gui, win32api, win32con
 from PIL import ImageGrab
 import cv2
 import numpy as np
@@ -11,6 +13,17 @@ import pyautogui
 # load an empty Vision class
 vision_limestone = Vision()
 threshold = 0.8
+hwnd = None
+
+
+def click(x, y):
+    handle = hwnd
+
+    client_pos = win32gui.ScreenToClient(handle, (x, y))
+    tmp = client_pos[0] << 16 | client_pos[1] & 0xffff
+    win32api.PostMessage(handle, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, tmp)
+    time.sleep(1)
+    win32api.PostMessage(handle, win32con.WM_LBUTTONUP, win32con.MK_LBUTTON, tmp)
 
 
 def main():
